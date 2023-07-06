@@ -1,84 +1,89 @@
 #include <stdio.h>
 #include <stdlib.h>
-//#include <string.h>
 #include "functions.h"
+#include <dlfcn.h>
+#include <string.h>
+
+char* dll(char* pathname, void** dp,int libs) {
+
+	char* (*getname)(void);
+	char* name;
+
+	dp[libs] = dlopen(pathname, RTLD_LAZY);
+	if (!dp[libs]) {
+		fputs(dlerror(), stderr);
+		exit(1);
+	}
+
+	getname = dlsym(dp[libs], "get");
+	if(!getname) {
+		fputs(dlerror(), stderr);
+		exit(1);
+	}
+
+	name = (*getname)();
+	
+	return name;
+
+}
 
 int main() {
-
-	char exit = 1;
 	int func = 0;
-	int a, b, result;
+	int a, b, result, libs = 0;
+
+	char* pathname = (char*)malloc(sizeof(char) * 32);
+	char** funcname = (char**)malloc(0);
+	void** dps = (void**)malloc(0);;
+	int(*function)(int, int);
+
+	puts("Enter the lib (./libname.so) or q to continue: \n");
+
+	while (1) {
+		fgets(pathname, 31, stdin);
+		pathname[strcspn(pathname, "\n")] = '\0';
+
+		if (pathname[0] == 113)
+			break;
+
+		libs++;
+		funcname = (char**)realloc(funcname, sizeof(char*) * libs);
+		dps = (void**)realloc(dps, libs * sizeof(void**));
+		funcname[libs - 1] = dll(pathname, dps, libs - 1);
+
+		system("clear");
+	}
 
 	do {
 
-		puts("press 1 for sum\n"
-			"press 2 for sub\n"
-			"press 3 for mul\n"
-			"press 4 for div\n"
-			"press 5 for exit\n");
+		for (int i = 0; i < libs; i++) {
+			printf("enter the %d, for %s: \n", i, funcname[i]);
+		}
+		puts("press 5 for exit\n");
 		scanf("%d", &func);
 		getchar();
 
-		switch (func) {
-
-		case 1:
-			system("clear");
-			puts("enter the first term: ");
-			scanf("%d", &a);
-			getchar();
-			puts("enter the second term: ");
-			scanf("%d", &b);
-			getchar();
-
-			result = sum(a, b);
-			printf("answer = %d\n", result);
+		if (func == 5)
 			break;
 
-		case 2:
-			system("clear");
-			puts("enter the first term: ");
-			scanf("%d", &a);
-			getchar();
-			puts("enter the second term: ");
-			scanf("%d", &b);
-			getchar();
+		system("clear");
+		puts("enter the first term: ");
+		scanf("%d", &a);
+		getchar();
+		puts("enter the second term: ");
+		scanf("%d", &b);
+		getchar();
 
-			result = sub(a, b);
-			printf("answer = %d\n", result);
-			break;
+		function = dlsym(dps[func], funcname[func]);
+		result = function(a, b);
 
-		case 3:
-			system("clear");
-			puts("enter the first term: ");
-			scanf("%d", &a);
-			getchar();
-			puts("enter the second term: ");
-			scanf("%d", &b);
-			getchar();
+		printf("answer = %d\n ", result);
 
-			result = mult(a, b);
-			printf("answer = %d\n", result);
-			break;
+	} while (1);
 
-		case 4:
-			system("clear");
-			puts("enter the first term: ");
-			scanf("%d", &a);
-			getchar();
-			puts("enter the second term: ");
-			scanf("%d", &b);
-			getchar();
 
-			result = divide(a, b);
-			printf("answer = %d\n", result);
-			break;
-
-		case 5:
-			exit = 0;
-			break;
-		}
-
-	} while (exit);
+	for (int i = 0; i < libs; i++) {
+		dlclose(dps[i]);
+	}
 
 	return 0;
 

@@ -1,3 +1,6 @@
+char* get() {
+	return "sub";
+}
 
 int sub(int a, int b) {
 

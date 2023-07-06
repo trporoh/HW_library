@@ -1,3 +1,6 @@
+char* get() {
+	return "mult";
+}
 
 int mult(int a, int b) {
 

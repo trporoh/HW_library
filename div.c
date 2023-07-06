@@ -1,3 +1,7 @@
+char* get() {
+	return "divide";
+}
+
 
 int divide(int a, int b) {
 	if (b != 0) {
